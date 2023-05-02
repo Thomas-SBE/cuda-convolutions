@@ -22,7 +22,8 @@ __global__ void edges(unsigned char* data, unsigned char* out, int height, int w
 
     if(x > 0 && x < width-1 && y > 0 && y < height-1)
     {
-        double coeff_mat[] = {-1, -1, -1, -1, 8, -1, -1, -1, -1};
+        double h_coeff_mat[] = {-1, -2, -1, 0, 0, 0, 1, 2, 1};
+        double v_coeff_mat[] = {-1, 0, 1, -2, 0, 2, -1, 0, 1};
         int size = 3;
         int middle = (size-1)/2;
 
@@ -37,7 +38,8 @@ __global__ void edges(unsigned char* data, unsigned char* out, int height, int w
             int rx = x + r_offset;
             int ry = y + r_line;
 
-            sum += data[(ry * width) + rx] * (coeff_mat[s]*strength);
+            sum += data[(ry * width) + rx] * (h_coeff_mat[s]*strength);
+            sum += data[(ry * width) + rx] * (v_coeff_mat[s]*strength);
         }
 
         result = sum > 255 ? 255 : (sum < 0 ? 0 : sum);

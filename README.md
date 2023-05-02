@@ -9,7 +9,7 @@
 
 |**Filtre**|**Séquentiel**|**CUDA**|**CUDA-Optimisé**|
 |-------|-----------|---------|--------|
-|Edge| ✅ | ❌ | ❌ |
-|Gaussian Blur | ✅ | ❌ | ❌ |
-|Sobel | ✅ | ❌ | ❌ |
-|Laplacian | ✅ | ❌ | ❌ |
+|Edge| ✅ | ✅ | ❌ |
+|Gaussian Blur | ✅ | ✅ | ❌ |
+|Sobel | ✅ | ✅ | ❌ |
+|Laplacian | ✅ | ✅ | ❌ |

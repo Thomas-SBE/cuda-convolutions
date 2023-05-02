@@ -22,9 +22,24 @@ __global__ void edges(unsigned char* data, unsigned char* out, int height, int w
 
     if(x > 0 && x < width-1 && y > 0 && y < height-1)
     {
-        double coeff_mat[] = {-1, -1, -1, -1, 8, -1, -1, -1, -1};
-        int size = 3;
+        double coeff_mat[] = {0, 0, 0, 5, 0, 0, 0,
+                       0, 5,18,32,18, 5, 0,
+                       0,18,64,100,64,18,0,
+                       5,32,100,100,100,32,5,
+                       0,18,64,100,64,18,0,
+                       0, 5,18,32,18, 5, 0,
+                       0, 0, 0, 5, 0, 0, 0};
+        int size = 7;
         int middle = (size-1)/2;
+
+        int norm_sum = 0;
+        for (int i = 0; i < size*size; i++) {
+        norm_sum += coeff_mat[i];
+        }
+
+        for (int i = 0; i < size*size; i++) {
+        coeff_mat[i] /= norm_sum;
+        }
 
         int sum = 0;
 

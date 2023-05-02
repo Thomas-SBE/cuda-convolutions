@@ -22,8 +22,8 @@ __global__ void edges(unsigned char* data, unsigned char* out, int height, int w
 
     if(x > 0 && x < width-1 && y > 0 && y < height-1)
     {
-        double coeff_mat[] = {-1, -1, -1, -1, 8, -1, -1, -1, -1};
-        int size = 3;
+        double coeff_mat[] = {0, 0, -1, 0, 0, 0, -1, -2, -1, 0, -1, -2, 16, -2, -1, 0, -1, -2, -1, 0, 0, 0, -1, 0, 0};
+        int size = 5;
         int middle = (size-1)/2;
 
         int sum = 0;
