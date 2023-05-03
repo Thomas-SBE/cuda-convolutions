@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cmath>
+#include <chrono>
 #include <cstring>
 #include <IL/il.h>
 
@@ -27,6 +28,10 @@ int main() {
   // Traitement de l'image
   unsigned char* out_grey = new unsigned char[ width*height ];
   unsigned char* out_blur = new unsigned char[ width*height];
+
+  // Creation et lancement du chrono
+  std::chrono::time_point<std::chrono::system_clock> start, end;
+  start = std::chrono::system_clock::now();
 
   // Grayscale
   for( std::size_t i = 0 ; i < width*height ; ++i )
@@ -90,6 +95,13 @@ int main() {
           out_blur[(y*width + x)] = sum;
       }
   }
+
+  // Fin du chrono
+  end = std::chrono::system_clock::now();
+
+  // Recuperation du temps écoulé
+  auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+  std::cout << "Elapsed Time (ms) : " << elapsedTime << std::endl;
 
   //Placement des données dans l'image
   ilTexImage( width, height, 1, 1, IL_LUMINANCE, IL_UNSIGNED_BYTE, out_blur);
