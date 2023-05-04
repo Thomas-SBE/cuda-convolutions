@@ -100,8 +100,8 @@ int main() {
   end = std::chrono::system_clock::now();
 
   // Recuperation du temps écoulé
-  auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-  std::cout << "Elapsed Time (ms) : " << elapsedTime << std::endl;
+  auto elapsedTime = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+  std::cout << "Elapsed Time (ms) : " << (elapsedTime/1000.0f) << std::endl;
 
   //Placement des données dans l'image
   ilTexImage( width, height, 1, 1, IL_LUMINANCE, IL_UNSIGNED_BYTE, out_blur);
