@@ -9,7 +9,7 @@ cuda: cuda_edge cuda_sobel cuda_blur cuda_laplacian
 blur: seq/blur.cpp
 	$(CXX) $(CXXFLAGS) -o build/$@ $< $(LDLIBS)
 
-sobel: seq/sobel_ed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ge.cpp
+sobel: seq/sobel_edge.cpp
 	$(CXX) $(CXXFLAGS) -o build/$@ $< $(LDLIBS)
 
 edge: seq/edge.cpp
