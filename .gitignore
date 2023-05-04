@@ -1,9 +1,4 @@
-*
-
-.vscode/*
-
-!*.*
-!Makefile
-
+build/
+.vscode/
 *.jpg
 *.png

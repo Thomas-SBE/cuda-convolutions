@@ -6,29 +6,29 @@ LDLIBS=-lm -lIL
 all: blur sobel edge laplacian
 cuda: cuda_edge cuda_sobel cuda_blur cuda_laplacian
 
-blur: blur.cpp
-	$(CXX) $(CXXFLAGS) -o $@ $< $(LDLIBS)
+blur: seq/blur.cpp
+	$(CXX) $(CXXFLAGS) -o build/$@ $< $(LDLIBS)
 
-sobel: sobel_edge.cpp
-	$(CXX) $(CXXFLAGS) -o $@ $< $(LDLIBS)
+sobel: seq/sobel_edge.cpp
+	$(CXX) $(CXXFLAGS) -o build/$@ $< $(LDLIBS)
 
-edge: edge.cpp
-	$(CXX) $(CXXFLAGS) -o $@ $< $(LDLIBS)
+edge: seq/edge.cpp
+	$(CXX) $(CXXFLAGS) -o build/$@ $< $(LDLIBS)
 
-laplacian: laplacian.cpp
-	$(CXX) $(CXXFLAGS) -o $@ $< $(LDLIBS)
+laplacian: seq/laplacian.cpp
+	$(CXX) $(CXXFLAGS) -o build/$@ $< $(LDLIBS)
 
-cuda_edge: edge.cu
-	$(NVC) -o $@ $< $(LDLIBS)
+cuda_edge: cuda/edge.cu
+	$(NVC) -o build/$@ $< $(LDLIBS)
 
-cuda_sobel: sobel_edge.cu
-	$(NVC) -o $@ $< $(LDLIBS)
+cuda_sobel: cuda/sobel_edge.cu
+	$(NVC) -o build/$@ $< $(LDLIBS)
 
-cuda_blur: blur.cu
-	$(NVC) -o $@ $< $(LDLIBS)
+cuda_blur: cuda/blur.cu
+	$(NVC) -o build/$@ $< $(LDLIBS)
 
-cuda_laplacian: laplacian.cu
-	$(NVC) -o $@ $< $(LDLIBS)
+cuda_laplacian: cuda/laplacian.cu
+	$(NVC) -o build/$@ $< $(LDLIBS)
 
 
 .PHONY: clean

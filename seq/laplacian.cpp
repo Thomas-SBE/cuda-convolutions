@@ -1,7 +1,7 @@
 #include <iostream>
 #include <cmath>
-#include <chrono>
 #include <cstring>
+#include <chrono>
 #include <IL/il.h>
 
 int main()
@@ -56,10 +56,10 @@ int main()
     double strength = 1.0f;
 
     // Définition de la matrice de convolution
-    double coeff_mat[] = {-1, -1, -1, -1, 8, -1, -1, -1, -1};
+    double coeff_mat[] = {0, 0, -1, 0, 0, 0, -1, -2, -1, 0, -1, -2, 16, -2, -1, 0, -1, -2, -1, 0, 0, 0, -1, 0, 0};
 
     // Définition des dimensions de la matrice de convolution
-    int size = 3;
+    int size = 5;
 
     // Application de l'intensité !
     for(int i = 0; i < size*size; i++) coeff_mat[i] *= strength;
@@ -81,9 +81,7 @@ int main()
                 int ry = y + r_line;
 
                 sum += out_grey[(ry * width) + rx] * coeff_mat[s];
-                if(x == 1 && y == 1){
-                    printf("S %d, LINE %d, OFFSET %d, RO %d RD %d, RX %d RY %d, SUM %d\n", s, line, offset, r_offset, r_line, rx, ry, sum);
-                }
+                
             }
             out_blur[(y * width) + x] = sum > 255 ? 255 : (sum < 0 ? 0 : sum);
         }

@@ -86,9 +86,7 @@ int main()
 
                 sum += out_grey[(ry * width) + rx] * h_coeff_mat[s];
                 sum += out_grey[(ry * width) + rx] * v_coeff_mat[s];
-                if(x == 1 && y == 1){
-                    printf("S %d, LINE %d, OFFSET %d, RO %d RD %d, RX %d RY %d, SUM %d\n", s, line, offset, r_offset, r_line, rx, ry, sum);
-                }
+                
             }
             out_blur[(y * width) + x] = sum > 255 ? 255 : (sum < 0 ? 0 : sum);
         }
