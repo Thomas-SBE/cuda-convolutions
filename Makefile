@@ -5,6 +5,8 @@ LDLIBS=-lm -lIL
 
 all: blur sobel edge laplacian
 cuda: cuda_edge cuda_sobel cuda_blur cuda_laplacian
+unoptimized: e_unoptimized l_unoptimized b_unoptimized
+
 
 blur: seq/blur.cpp
 	$(CXX) $(CXXFLAGS) -o build/$@ $< $(LDLIBS)
@@ -30,7 +32,7 @@ cuda_blur: cuda/blur.cu
 cuda_laplacian: cuda/laplacian.cu
 	$(NVC) -o build/$@ $< $(LDLIBS)
 
-unoptimized: unoptimized/edge.cu
+e_unoptimized: unoptimized/edge.cu
 	$(NVC) -o build/$@ $< $(LDLIBS)
 
 l_unoptimized: unoptimized/laplacian.cu
@@ -39,14 +41,11 @@ l_unoptimized: unoptimized/laplacian.cu
 b_unoptimized: unoptimized/blur.cu
 	$(NVC) -o build/$@ $< $(LDLIBS)
 
-shared: optimized/edge_sm.cu
+shared: optimized/shared_mem.cu
 	$(NVC) -o build/$@ $< $(LDLIBS)
 
-l_shared: optimized/laplacian_sm.cu
+streams: optimized/streams.cu
 	$(NVC) -o build/$@ $< $(LDLIBS)
-
-b_shared: optimized/blur_sm.cu
-	$(NVC) -lineinfo -o build/$@ $< $(LDLIBS)
 
 details: details.cu
 	$(NVC) -o build/$@ $< $(LDLIBS)

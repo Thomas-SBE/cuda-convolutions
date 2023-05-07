@@ -124,7 +124,7 @@ int main()
         std::cout << "Erreur cudaMemcpy c_data - HostToDevice" << std::endl;
     }
 
-    dim3 blockDimension (32, 32);
+    dim3 blockDimension (32, 19);
     dim3 gridDimensions ((width/blockDimension.x)+1, (height/blockDimension.y)+1);    
 
     grayscale<<<gridDimensions, blockDimension, blockDimension.x * blockDimension.y>>>(c_data, c_out, height, width);
