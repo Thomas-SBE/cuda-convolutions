@@ -3,6 +3,10 @@
 #include <cstring>
 #include <IL/il.h>
 
+#define BLOCK_SIZE 8
+#define CONVOLUTION_SIZE 5
+#define GHOSTS_SIZE 2
+
 __global__ void grayscale(unsigned char* data, unsigned char* out, int height, int width){
     auto x = (blockIdx.x * blockDim.x) + threadIdx.x;
     auto y = (blockIdx.y * blockDim.y) + threadIdx.y;
@@ -13,12 +17,27 @@ __global__ void grayscale(unsigned char* data, unsigned char* out, int height, i
 }
 
 __global__ void edges(unsigned char* data, unsigned char* out, int height, int width, double strength){
+    
+    __shared__ unsigned char mem[(BLOCK_SIZE+(GHOSTS_SIZE*2))*(BLOCK_SIZE+(GHOSTS_SIZE*2))];
+
     auto x = (blockIdx.x * blockDim.x) + threadIdx.x;
     auto y = (blockIdx.y * blockDim.y) + threadIdx.y;
     if(x >= width || y >= height) return;
     int i = (y*width)+x;
 
-    unsigned char result = data[i];
+    if(threadIdx.x == 0){
+        if(threadIdx.y == 0)
+            for(int a = 0; a < BLOCK_SIZE+(GHOSTS_SIZE*2); a++) mem[a] = data[i-width-1+a];
+        for(int a = 0; a < BLOCK_SIZE+(GHOSTS_SIZE*2); a++) mem[(threadIdx.y+1)*(BLOCK_SIZE+(GHOSTS_SIZE*2))+a] = data[i-1+a];
+        if(threadIdx.y == blockDim.y-1)
+            for(int a = 0; a < BLOCK_SIZE+(GHOSTS_SIZE*2); a++) mem[(threadIdx.y+2)*(BLOCK_SIZE+(GHOSTS_SIZE*2))+a] = data[i-1+width+a];
+    }
+
+    __syncthreads();
+
+    int pos = (threadIdx.y*(BLOCK_SIZE+(GHOSTS_SIZE*2))) + threadIdx.x + 1;
+
+    unsigned char result = mem[pos];
 
     if(x > 0 && x < width-1 && y > 0 && y < height-1)
     {
@@ -34,10 +53,12 @@ __global__ void edges(unsigned char* data, unsigned char* out, int height, int w
             int r_offset = offset - middle;
             int r_line = line - middle;
 
-            int rx = x + r_offset;
-            int ry = y + r_line;
+            int rx = threadIdx.x + r_offset;
+            int ry = threadIdx.y + r_line;
 
-            sum += data[(ry * width) + rx] * (coeff_mat[s]*strength);
+            unsigned char v = mem[((ry+1)*(BLOCK_SIZE+(GHOSTS_SIZE*2)))+rx+1];
+
+            sum += v * (coeff_mat[s]*strength);
         }
 
         result = sum > 255 ? 255 : (sum < 0 ? 0 : sum);
@@ -107,11 +128,10 @@ int main()
         std::cout << "Erreur cudaMemcpy c_data - HostToDevice" << std::endl;
     }
 
-    dim3 blockDimension (32, 32);
+    dim3 blockDimension (BLOCK_SIZE, BLOCK_SIZE);
     dim3 gridDimensions ((width/blockDimension.x)+1, (height/blockDimension.y)+1);
 
-
-    grayscale<<<gridDimensions, blockDimension, blockDimension.x * blockDimension.y>>>(c_data, c_out, height, width);
+    grayscale<<<gridDimensions, blockDimension, 0>>>(c_data, c_out, height, width);
     kernelStatus = cudaGetLastError();
     if(kernelStatus != cudaSuccess){
         std::cout << "Erreur CUDA " << cudaGetErrorString(kernelStatus) << std::endl;
@@ -121,8 +141,8 @@ int main()
     if(cudaStatus != cudaSuccess){
         std::cout << "Erreur cudaMemcpy c_data - DeviceToHost" << std::endl;
     }
-    
-    edges<<<gridDimensions, blockDimension, blockDimension.x * blockDimension.y>>>(c_data, c_out, height, width, 1.2f);
+
+    edges<<<gridDimensions, blockDimension, 0>>>(c_data, c_out, height, width, 1.2f);
     kernelStatus = cudaGetLastError();
     if(kernelStatus != cudaSuccess){
         std::cout << "Erreur CUDA " << cudaGetErrorString(kernelStatus) << std::endl;

@@ -30,6 +30,27 @@ cuda_blur: cuda/blur.cu
 cuda_laplacian: cuda/laplacian.cu
 	$(NVC) -o build/$@ $< $(LDLIBS)
 
+unoptimized: unoptimized/edge.cu
+	$(NVC) -o build/$@ $< $(LDLIBS)
+
+l_unoptimized: unoptimized/laplacian.cu
+	$(NVC) -o build/$@ $< $(LDLIBS)
+
+b_unoptimized: unoptimized/blur.cu
+	$(NVC) -o build/$@ $< $(LDLIBS)
+
+shared: optimized/edge_sm.cu
+	$(NVC) -o build/$@ $< $(LDLIBS)
+
+l_shared: optimized/laplacian_sm.cu
+	$(NVC) -o build/$@ $< $(LDLIBS)
+
+b_shared: optimized/blur_sm.cu
+	$(NVC) -lineinfo -o build/$@ $< $(LDLIBS)
+
+details: details.cu
+	$(NVC) -o build/$@ $< $(LDLIBS)
+
 
 .PHONY: clean
 

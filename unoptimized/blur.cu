@@ -4,23 +4,25 @@
 #include <IL/il.h>
 
 __global__ void grayscale(unsigned char* data, unsigned char* out, int height, int width){
-    auto x = (blockIdx.x * blockDim.x) + threadIdx.x;
-    auto y = (blockIdx.y * blockDim.y) + threadIdx.y;
-    if(x >= width || y >= height) return;
-    int i = (y*width)+x;
-    int z = (height - y - 1) * width + x;
-    out[z] = (307 * data[3 * i] + 604 * data[3 * i + 1] + 113 * data[3 * i + 2]) >> 10;
+    auto i = (blockIdx.x * blockDim.x) + threadIdx.x;
+    out[i] = (307 * data[3 * i] + 604 * data[3 * i + 1] + 113 * data[3 * i + 2]) >> 10;
+
+    __syncthreads();
+
+    if(blockIdx.x > height/2){
+        char s = out[i];
+        int z = (height - blockIdx.x - 1) * blockDim.x + threadIdx.x;
+        out[i] = out[z];
+        out[z] = s;
+    }
 }
 
 __global__ void edges(unsigned char* data, unsigned char* out, int height, int width, double strength){
-    auto x = (blockIdx.x * blockDim.x) + threadIdx.x;
-    auto y = (blockIdx.y * blockDim.y) + threadIdx.y;
-    if(x >= width || y >= height) return;
-    int i = (y*width)+x;
+    auto i = (blockIdx.x * blockDim.x) + threadIdx.x;
 
     unsigned char result = data[i];
 
-    if(x > 0 && x < width-1 && y > 0 && y < height-1)
+    if(threadIdx.x > 0 && threadIdx.x < width-1 && blockIdx.x > 0 && blockIdx.x < height-1)
     {
         double coeff_mat[] = {0, 0, 0, 5, 0, 0, 0,
                        0, 5,18,32,18, 5, 0,
@@ -41,6 +43,8 @@ __global__ void edges(unsigned char* data, unsigned char* out, int height, int w
         coeff_mat[i] /= norm_sum;
         }
 
+        int x = threadIdx.x;
+        int y = blockIdx.x;
         int sum = 0;
 
         for(int s = 0; s < size*size; s++){
@@ -87,19 +91,14 @@ int main()
     // Traitement de l'image
     unsigned char *out_grey = new unsigned char[width * height];
     unsigned char *out_blur = new unsigned char[width * height];
-
-    // CUDA
-    unsigned char* c_data;
-    unsigned char* c_out;
-
+ 
     // Gestion de la mesure du temps
     cudaEvent_t start, stop;
     float elapsedTime;
 
-    // Gestion des erreurs CUDA
-    cudaError_t cudaStatus;
-    cudaError_t kernelStatus;
-
+    // CUDA
+    unsigned char* c_data;
+    unsigned char* c_out;
 
     // Creation des events pour mesure le temps
     cudaEventCreate(&start);
@@ -108,54 +107,24 @@ int main()
     // Debut du record de l'event start
     cudaEventRecord(start,0);
 
-    cudaStatus = cudaMalloc(&c_data, 3 * width * height);
-    if(cudaStatus != cudaSuccess){
-        std::cout << "Erreur cudaMalloc c_data" << std::endl;
-    }
+    cudaMalloc(&c_data, 3 * width * height);
+    cudaMalloc(&c_out, width * height);
 
-    cudaStatus = cudaMalloc(&c_out, width * height);
-    if(cudaStatus != cudaSuccess){
-        std::cout << "Erreur cudaMalloc c_out" << std::endl;
-    }
-    
+    cudaMemcpy(c_data, data, 3 * width * height * sizeof(unsigned char), cudaMemcpyHostToDevice);
 
-    cudaStatus = cudaMemcpy(c_data, data, 3 * width * height * sizeof(unsigned char), cudaMemcpyHostToDevice);
-    if(cudaStatus != cudaSuccess){
-        std::cout << "Erreur cudaMemcpy c_data - HostToDevice" << std::endl;
-    }
+    grayscale<<<height, width>>>(c_data, c_out, height, width);
 
-    dim3 blockDimension (32, 32);
-    dim3 gridDimensions ((width/blockDimension.x)+1, (height/blockDimension.y)+1);    
+    cudaMemcpy(c_data, c_out, width * height, cudaMemcpyDeviceToDevice);
 
-    grayscale<<<gridDimensions, blockDimension, blockDimension.x * blockDimension.y>>>(c_data, c_out, height, width);
-    kernelStatus = cudaGetLastError();
-    if(kernelStatus != cudaSuccess){
-        std::cout << "Erreur CUDA " << cudaGetErrorString(kernelStatus) << std::endl;
-    }
-    
-    cudaStatus = cudaMemcpy(c_data, c_out, width * height, cudaMemcpyDeviceToDevice);
-     if(cudaStatus != cudaSuccess){
-        std::cout << "Erreur cudaMemcpy c_data - HostToDevice" << std::endl;
-    }
-    
-    edges<<<gridDimensions, blockDimension, blockDimension.x * blockDimension.y>>>(c_data, c_out, height, width, 1.2f);
-    kernelStatus = cudaGetLastError();
-    if(kernelStatus != cudaSuccess){
-        std::cout << "Erreur CUDA " << cudaGetErrorString(kernelStatus) << std::endl;
-    }
+    edges<<<height, width>>>(c_data, c_out, height, width, 1.2f);
 
-    cudaStatus = cudaMemcpy(out_blur, c_out, width*height*sizeof(unsigned char), cudaMemcpyDeviceToHost);
-    if(cudaStatus != cudaSuccess){
-        std::cout << "Erreur cudaMemcpy out_blur - DeviceToHost" << std::endl;
-    }
+    cudaMemcpy(out_blur, c_out, width*height*sizeof(unsigned char), cudaMemcpyDeviceToHost);
 
+    // Récupération du temps d'éxécution
     cudaEventRecord(stop,0);
     cudaEventSynchronize(stop);
     cudaEventElapsedTime(&elapsedTime, start, stop);
     std::cout << "Time (ms) : " << elapsedTime << std::endl;
-
-    cudaEventDestroy(start);
-    cudaEventDestroy(stop);
 
     cudaFree(c_data);
     cudaFree(c_out);

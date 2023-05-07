@@ -89,6 +89,8 @@ int main()
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
 
+    // Debut du record de l'event start
+    cudaEventRecord(start,0);
 
     cudaStatus = cudaMalloc(&c_data, 3 * width * height);
     if(cudaStatus != cudaSuccess){
@@ -107,9 +109,6 @@ int main()
 
     dim3 blockDimension (32, 32);
     dim3 gridDimensions ((width/blockDimension.x)+1, (height/blockDimension.y)+1);
-
-    // Debut du record de l'event start
-    cudaEventRecord(start,0);
 
     grayscale<<<gridDimensions, blockDimension, blockDimension.x * blockDimension.y>>>(c_data, c_out, height, width);
     kernelStatus = cudaGetLastError();
